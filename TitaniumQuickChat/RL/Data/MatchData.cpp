@@ -40,7 +40,7 @@ namespace MatchData
             if (server) {
                 BallWrapper ball = server.GetBall();
                 if (ball) {
-                    Vector v = ball.GetVelocity();
+                    Vector v = ball.GetReplicatedRBState().LinearVelocity;
                     speedUU = std::sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
                 }
             }
@@ -301,22 +301,7 @@ namespace MatchData
         if (!gameWrapper) return;
         if (!gameWrapper->IsInOnlineGame()) return;
         
-        try {
-            PlayerControllerWrapper pc = gameWrapper->GetPlayerController();
-            if (pc.IsNull()) return;
-            
-            PriWrapper pri = pc.GetPRI();
-            if (pri.IsNull()) return;
-            
-            // Update local player data
-            me.score = pri.GetMatchScore();
-            me.name = pri.GetPlayerName().ToString();
-            me.valid = true;
-            
-            // Update cached goal difference
-            UpdateGoalDiff();
-        }
-        catch (...) {
-        }
+        UpdatePlayers();
+        UpdateGoalDiff();
     }
 }
