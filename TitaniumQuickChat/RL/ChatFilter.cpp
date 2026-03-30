@@ -7,7 +7,7 @@
 
 namespace ChatFilter
 {
-    static constexpr uintptr_t OFFSET_QUICKCHAT_FILTER = 0x00CC;
+    static constexpr uintptr_t OFFSET_QUICKCHAT_FILTER = 0x00D4;
     
     void PopulateDefaultChannels()
     {

@@ -16,6 +16,7 @@ namespace Header
     static float comboTiming = 0.2f;
     static float progressiveTiming = 0.15f;
     static bool customChannelPerQC = false;
+    static bool showMatchNotif = true;
 
     void Render()
     {
@@ -160,4 +161,7 @@ namespace Header
     
     bool GetCustomChannelPerQC() { return customChannelPerQC; }
     void SetCustomChannelPerQC(bool value) { customChannelPerQC = value; }
+
+    bool GetShowMatchNotif() { return showMatchNotif; }
+    void SetShowMatchNotif(bool value) { showMatchNotif = value; }
 }

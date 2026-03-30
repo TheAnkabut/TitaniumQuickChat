@@ -28,6 +28,7 @@ namespace TitaniumLocalization
             {"sequence", "Secuencia (-)"},
             {"mode", "Modo:"},
             {"custom_channel_per_qc", "Canal personalizado por QC"},
+            {"show_match_notif", "Notificación de perfil activo antes de cada partido"},
 
             // Welcome
             {"welcome_prefix", "Bienvenido a"},
@@ -41,7 +42,6 @@ namespace TitaniumLocalization
             {"tab_quickchats", "Quick Chats"},
             {"tab_profiles", "Perfiles"},
             {"title_label", "Título:"},
-            {"title_tooltip", "Puede que no funcione siempre"},
             {"category_n", "Categoría %d"},
             {"channel_cat_tooltip", "Canal para los 4 QCs de esta categoría"},
             {"channel_slot_tooltip", "Canal: Match/Team/Party"},
@@ -120,6 +120,7 @@ namespace TitaniumLocalization
             {"sequence", "Sequence (-)"},
             {"mode", "Mode:"},
             {"custom_channel_per_qc", "Custom channel per QC"},
+            {"show_match_notif", "Active profile notification before each match"},
 
             // Welcome
             {"welcome_prefix", "Welcome to"},
@@ -133,7 +134,6 @@ namespace TitaniumLocalization
             {"tab_quickchats", "Quick Chats"},
             {"tab_profiles", "Profiles"},
             {"title_label", "Title:"},
-            {"title_tooltip", "Might not always work"},
             {"category_n", "Category %d"},
             {"channel_cat_tooltip", "Channel for all 4 QCs in this category"},
             {"channel_slot_tooltip", "Channel: Match/Team/Party"},

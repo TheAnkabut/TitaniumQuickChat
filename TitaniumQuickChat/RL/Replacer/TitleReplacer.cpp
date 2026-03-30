@@ -7,6 +7,7 @@
 #include "../InvisibleHandleStatEvent.h"
 #include "../Notification.h"
 #include "../../UI/Profile.h"
+#include "../../UI/Header.h"
 #include "../../logging.h"
 #include "../../Utils/Localization.h"
 #include <windows.h>
@@ -51,7 +52,7 @@ namespace TitleReplacer
                 WriteCurrentTitle();
                 
                 std::string profileName = Profile::GetCurrentProfileName();
-                if (!profileName.empty())
+                if (!profileName.empty() && Header::GetShowMatchNotif())
                 {
                     Notification::Show(profileName, TL("profile_active"));
                 }

@@ -68,58 +68,32 @@ namespace SettingsScanner
         MEMORY_BASIC_INFORMATION memInfo;
         uintptr_t addr = 0x10000000000;
         
-        // Step 1: Find Info in 2MB region
+        // Step 1: Find Pre Game and Info in 4MB region
         while (VirtualQuery(reinterpret_cast<void*>(addr), &memInfo, sizeof(memInfo))) {
             uintptr_t regionBase = reinterpret_cast<uintptr_t>(memInfo.BaseAddress);
             if (regionBase < 0x10000000000) { addr = regionBase + memInfo.RegionSize; continue; }
-            if ((memInfo.State == MEM_COMMIT) && (memInfo.Type == MEM_PRIVATE) && 
-                (memInfo.Protect == PAGE_READWRITE) && (memInfo.RegionSize == 0x200000) &&
-                (memInfo.AllocationBase == memInfo.BaseAddress)) {
-                const wchar_t* regionPtr = reinterpret_cast<const wchar_t*>(regionBase);
-                int64_t pos = FindInBuffer(regionPtr, memInfo.RegionSize / 2, CATEGORIES[0], wcslen(CATEGORIES[0]));
-                if (pos >= 0) { foundAddrs[0] = regionBase + pos * 2; break; }
-            }
-            addr = regionBase + memInfo.RegionSize;
-            if (addr > 0x7FFFFFFFFFFF) break;
-        }
-        if (foundAddrs[0] == 0) return;
-        
-        // Step 2: Collect 4MB regions and sort by distance to Info
-        struct Region { uintptr_t base; int64_t dist; };
-        std::vector<Region> regions;
-        addr = 0x10000000000;
-        while (VirtualQuery(reinterpret_cast<void*>(addr), &memInfo, sizeof(memInfo))) {
-            uintptr_t regionBase = reinterpret_cast<uintptr_t>(memInfo.BaseAddress);
-            if (regionBase < 0x10000000000) { addr = regionBase + memInfo.RegionSize; continue; }
+            
             if ((memInfo.State == MEM_COMMIT) && (memInfo.Type == MEM_PRIVATE) && 
                 (memInfo.Protect == PAGE_READWRITE) && (memInfo.RegionSize == 0x400000) &&
                 (memInfo.AllocationBase == memInfo.BaseAddress)) {
-                Region r; r.base = regionBase;
-                r.dist = std::abs(static_cast<int64_t>(regionBase) - static_cast<int64_t>(foundAddrs[0]));
-                regions.push_back(r);
-            }
-            addr = regionBase + memInfo.RegionSize; 
-            if (addr > 0x7FFFFFFFFFFF) break; 
-        } 
-        std::sort(regions.begin(), regions.end(), [](const Region& a, const Region& b) { return a.dist < b.dist; });
-        
-        // Step 3: Find Pre Game + verify Apologies nearby
-        for (auto& region : regions) {
-            const wchar_t* regionPtr = reinterpret_cast<const wchar_t*>(region.base);
-            size_t regionWchars = 0x400000 / 2;
-            int64_t preGamePos = FindInBuffer(regionPtr, regionWchars, CATEGORIES[5], wcslen(CATEGORIES[5]));
-            if (preGamePos >= 0) {
-                size_t windowStart = (preGamePos >= 250) ? (preGamePos - 250) : 0;
-                size_t windowEnd = (std::min)(preGamePos + 250, static_cast<int64_t>(regionWchars) - static_cast<int64_t>(wcslen(CATEGORIES[3])));
-                int64_t apologiesPos = FindInBuffer(regionPtr + windowStart, windowEnd - windowStart, CATEGORIES[3], wcslen(CATEGORIES[3]));
-                if (apologiesPos >= 0) {
-                    for (int c = 1; c < 6; ++c) {
-                        int64_t pos = FindInBuffer(regionPtr, regionWchars, CATEGORIES[c], wcslen(CATEGORIES[c]));
-                        if (pos >= 0) foundAddrs[c] = region.base + pos * 2;
+                
+                const wchar_t* regionPtr = reinterpret_cast<const wchar_t*>(regionBase);
+                size_t numWchars = memInfo.RegionSize / 2;
+                
+                int64_t preGamePos = FindInBuffer(regionPtr, numWchars, CATEGORIES[5], wcslen(CATEGORIES[5]));
+                if (preGamePos >= 0) {
+                    int64_t infoPos = FindInBuffer(regionPtr, numWchars, CATEGORIES[0], wcslen(CATEGORIES[0]));
+                    if (infoPos >= 0) {
+                        for (int c = 0; c < 6; ++c) {
+                            int64_t pos = FindInBuffer(regionPtr, numWchars, CATEGORIES[c], wcslen(CATEGORIES[c]));
+                            if (pos >= 0) foundAddrs[c] = regionBase + pos * 2;
+                        }
+                        break;
                     }
-                    break;
                 }
             }
+            addr = regionBase + memInfo.RegionSize;
+            if (addr > 0x7FFFFFFFFFFF) break;
         }
     }
     
@@ -130,54 +104,49 @@ namespace SettingsScanner
         MEMORY_BASIC_INFORMATION memInfo;
         uintptr_t addr = 0x10000000000;
         
-        // Step 1: Find Previa first (2MB region - faster)
+        // Step 1: Find Previa in 2MB region
         while (VirtualQuery(reinterpret_cast<void*>(addr), &memInfo, sizeof(memInfo))) {
             uintptr_t regionBase = reinterpret_cast<uintptr_t>(memInfo.BaseAddress);
             if (regionBase < 0x10000000000) { addr = regionBase + memInfo.RegionSize; continue; }
+            
             if ((memInfo.State == MEM_COMMIT) && (memInfo.Type == MEM_PRIVATE) && 
                 (memInfo.Protect == PAGE_READWRITE) && (memInfo.RegionSize == 0x200000) &&
                 (memInfo.AllocationBase == memInfo.BaseAddress)) {
-                const wchar_t* regPtr = reinterpret_cast<const wchar_t*>(regionBase);
-                int64_t pos = FindInBuffer(regPtr, 0x200000 / 2, CATEGORIES[5], wcslen(CATEGORIES[5]));
+                
+                int64_t pos = FindInBuffer(reinterpret_cast<const wchar_t*>(regionBase), memInfo.RegionSize / 2, CATEGORIES[5], wcslen(CATEGORIES[5]));
                 if (pos >= 0) { foundAddrs[5] = regionBase + pos * 2; break; }
             }
             addr = regionBase + memInfo.RegionSize;
             if (addr > 0x7FFFFFFFFFFF) break;
         }
-        if (foundAddrs[5] == 0) return;
         
-        // Step 2: Collect 4MB regions and sort by distance to Previa
-        struct Region { uintptr_t base; int64_t dist; };
-        std::vector<Region> regions;
+        // Step 2: Find Info and Cumplidos in 4MB region
         addr = 0x10000000000;
         while (VirtualQuery(reinterpret_cast<void*>(addr), &memInfo, sizeof(memInfo))) {
             uintptr_t regionBase = reinterpret_cast<uintptr_t>(memInfo.BaseAddress);
             if (regionBase < 0x10000000000) { addr = regionBase + memInfo.RegionSize; continue; }
+            
             if ((memInfo.State == MEM_COMMIT) && (memInfo.Type == MEM_PRIVATE) && 
                 (memInfo.Protect == PAGE_READWRITE) && (memInfo.RegionSize == 0x400000) &&
                 (memInfo.AllocationBase == memInfo.BaseAddress)) {
-                Region r; r.base = regionBase;
-                r.dist = std::abs(static_cast<int64_t>(regionBase) - static_cast<int64_t>(foundAddrs[5]));
-                regions.push_back(r);
+                
+                const wchar_t* regionPtr = reinterpret_cast<const wchar_t*>(regionBase);
+                size_t numWchars = memInfo.RegionSize / 2;
+                
+                int64_t infoPos = FindInBuffer(regionPtr, numWchars, CATEGORIES[0], wcslen(CATEGORIES[0]));
+                if (infoPos >= 0) {
+                    int64_t cumpPos = FindInBuffer(regionPtr, numWchars, CATEGORIES[1], wcslen(CATEGORIES[1]));
+                    if (cumpPos >= 0) {
+                        for (int c = 0; c <= 4; ++c) {
+                            int64_t pos = FindInBuffer(regionPtr, numWchars, CATEGORIES[c], wcslen(CATEGORIES[c]));
+                            if (pos >= 0) foundAddrs[c] = regionBase + pos * 2;
+                        }
+                        break;
+                    }
+                }
             }
             addr = regionBase + memInfo.RegionSize;
             if (addr > 0x7FFFFFFFFFFF) break;
-        }
-        std::sort(regions.begin(), regions.end(), [](const Region& a, const Region& b) { return a.dist < b.dist; });
-        
-        // Step 3: Find Info in nearby 4MB regions
-        for (auto& region : regions) {
-            const wchar_t* regionPtr = reinterpret_cast<const wchar_t*>(region.base);
-            int64_t pos = FindInBuffer(regionPtr, 0x400000 / 2, CATEGORIES[0], wcslen(CATEGORIES[0]));
-            if (pos >= 0) {
-                foundAddrs[0] = region.base + pos * 2;
-                // Find categories 1-4 in same region
-                for (int c = 1; c <= 4; ++c) {
-                    int64_t cpos = FindInBuffer(regionPtr, 0x400000 / 2, CATEGORIES[c], wcslen(CATEGORIES[c]));
-                    if (cpos >= 0) foundAddrs[c] = region.base + cpos * 2;
-                }
-                break;
-            }
         }
     }
     
@@ -224,6 +193,7 @@ namespace SettingsScanner
                 category.text = RLUtils::WideToUtf8(CATEGORIES[i]);
                 category.address = foundAddrs[i];
                 category.maxChars = ScanForMaxChars(foundAddrs[i]);
+                if (QuickChatData::settingsBuf[i][0] != '\0') category.customText = QuickChatData::settingsBuf[i];
                 QuickChatData::settingsCategories.push_back(category);
             }
             
@@ -241,7 +211,7 @@ namespace SettingsScanner
                 // Auto-write customText if already loaded from profile
                 if (!cat.customText.empty() && cat.address != 0 && cat.maxChars > 0)
                 {
-                    std::wstring wtext(cat.customText.begin(), cat.customText.end());
+                    std::wstring wtext = RLUtils::Utf8ToWide(cat.customText);
                     MemoryUtils::WriteWideString(cat.address, wtext, cat.maxChars);
                     LOG("SettingsScanner: Auto-wrote customText '{}' for cat {}", cat.customText, i);
                 }
@@ -265,10 +235,11 @@ namespace MemoryUtils
 {
     void WriteWideString(uintptr_t address, const std::wstring& text, size_t maxChars)
     {
-        if (address == 0) return;
+        if (address == 0 || maxChars == 0) return;
         
         // Write text + fill remaining with null chars to clear old content
-        size_t writeLen = (text.length() < maxChars) ? text.length() : maxChars;
+        size_t maxText = maxChars - 1;
+        size_t writeLen = (text.length() < maxText) ? text.length() : maxText;
         size_t bufferSize = maxChars * sizeof(wchar_t);
         
         std::vector<wchar_t> buffer(maxChars, L'\0');
@@ -379,8 +350,7 @@ namespace TitleScanner
                         if (gameWrapper) {
                             gameWrapper->Execute([](GameWrapper*) {
                                 if (!QuickChatData::titleData.customText.empty()) {
-                                    std::wstring newText(QuickChatData::titleData.customText.begin(),
-                                                         QuickChatData::titleData.customText.end());
+                                    std::wstring newText = RLUtils::Utf8ToWide(QuickChatData::titleData.customText);
                                     MemoryUtils::WriteWideString(
                                         QuickChatData::titleData.foundAddress, newText,
                                         QuickChatData::titleData.maxWriteLen);

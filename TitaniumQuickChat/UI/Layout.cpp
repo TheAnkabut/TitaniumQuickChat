@@ -27,7 +27,8 @@ namespace Layout
         float totalW = ImGui::GetContentRegionAvail().x;
         float totalH = ImGui::GetContentRegionAvail().y;
         float titleH = ImGui::GetTextLineHeightWithSpacing();
-        float panelH = totalH - titleH;
+        float bottomReserve = ImGui::GetTextLineHeightWithSpacing() * 2.5f;
+        float panelH = totalH - titleH - bottomReserve;
         constexpr float splitterW = 8.0f;
         
         // Min
@@ -74,11 +75,7 @@ namespace Layout
         ImGui::Text("%s", TL("title_label"));
         ImGui::SameLine();
         
-        if (SettingsScanner::IsUnsupportedLanguage())
-        {
-            ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "(Only available in English/Spanish)");
-        }
-        else
+        if (!SettingsScanner::IsUnsupportedLanguage())
         {
             ImGui::SetNextItemWidth(100);
             
@@ -93,14 +90,14 @@ namespace Layout
             {
                  TitleReplacer::SetTitle(titleBuffer);
             }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::SetTooltip("%s", TL("title_tooltip"));
-            }
             if (ImGui::IsItemDeactivatedAfterEdit())
             {
                 Persistance::SaveProfile(Profile::GetCurrentProfileName());
             }
+        }
+        else
+        {
+            ImGui::TextDisabled("------------");
         }
 
         

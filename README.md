@@ -116,9 +116,11 @@ Intercepts quick chat inputs and sends custom text through the game's chat syste
 
 ## Installation
 
-1. Download the ZIP from [Releases](https://github.com/TheAnkabut/TitaniumQuickChat/releases).
-2. Extract it.
-3. Place the DLL in: `%appdata%\bakkesmod\bakkesmod\plugins`
+1. Close Rocket League.
+2. Download the ZIP from [Releases](https://github.com/TheAnkabut/TitaniumQuickChat/releases).
+3. Extract the zip.
+4. Run `install_TitaniumQuickChat.bat`.
+5. Start Rocket League.
 
 *This plugin sends a one-time request with user ID to count unique users.*
 

@@ -47,7 +47,7 @@ namespace MatchData
             
             bool isMetric = gameWrapper->GetbMetric();
             float converted = speedUU * (isMetric ? 0.036f : 0.022369f);
-            lastGoalSpeed = std::to_string(static_cast<int>(std::round(converted))) + (isMetric ? " KMH" : " MPH");
+            lastGoalSpeed = std::to_string(static_cast<int>(std::round(converted))) + (isMetric ? " km/h" : " mph");
         }
         else if (eventType == "Save" || eventType == "EpicSave")
         {
@@ -81,6 +81,7 @@ namespace MatchData
         LOG("CHAT: [{}] {}", lastPlayerName, lastMessage);
         
         Playground::UpdateAllProcessedText();
+        InGameReplacer::ForceRefreshDelayed();
     }
 
     // ==================== Initialize hooks ====================
@@ -189,6 +190,7 @@ namespace MatchData
         }
         
         Playground::UpdateAllProcessedText();
+        InGameReplacer::ForceRefreshDelayed();
     }
 
     // ==================== Get time remaining ====================
