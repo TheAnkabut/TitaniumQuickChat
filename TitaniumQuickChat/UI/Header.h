@@ -13,4 +13,6 @@ namespace Header
     void SetProgressiveTiming(float timing);
     bool GetCustomChannelPerQC();
     void SetCustomChannelPerQC(bool value);
+    bool GetShowMatchNotif();
+    void SetShowMatchNotif(bool value);
 }

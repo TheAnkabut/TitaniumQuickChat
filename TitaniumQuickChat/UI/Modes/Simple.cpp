@@ -8,6 +8,7 @@
 #include "../../Persistance/Persistance.h"
 #include "../../imgui/imgui_searchablecombo.h"
 #include "../../Utils/Localization.h"
+#include "../../Utils/RLUtils.h"
 
 namespace SimpleMode
 {
@@ -61,6 +62,12 @@ namespace SimpleMode
         float dropW = (availW - (itemSpacing * 3) - 60 - gapFromSplitter) / 4.0f;
         if (dropW < 80.0f) dropW = 80.0f;
 
+        if (SettingsScanner::IsUnsupportedLanguage())
+        {
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(Settings/Title editing only available in English/Spanish)");
+            ImGui::Spacing();
+        }
+
         for (int cat = 0; cat < 6; cat++)
         {
             int baseIdx = cat * 4;
@@ -96,16 +103,13 @@ namespace SimpleMode
                 ImGui::TextColored(COLOR_CAT_SETTINGS, TL("category_n"), cat + 1);
             }
             
-            if (SettingsScanner::IsUnsupportedLanguage())
+            if (!SettingsScanner::IsUnsupportedLanguage() && cat < static_cast<int>(cats.size()) && !cats[cat].text.empty())
             {
                 ImGui::SameLine();
-                ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "(Settings category editing only available in English/Spanish)");
-            }
-            else if (cat < static_cast<int>(cats.size()) && !cats[cat].text.empty())
-            {
-                ImGui::SameLine();
+                size_t maxInput = cats[cat].maxChars > 1 ? cats[cat].maxChars - 1 : 50;
+                if (maxInput > 127) maxInput = 127;
                 ImGui::PushItemWidth(150.0f);
-                if (ImGui::InputText(("##settings_simple_" + std::to_string(cat)).c_str(), QuickChatData::settingsBuf[cat], 128))
+                if (ImGui::InputText(("##settings_simple_" + std::to_string(cat)).c_str(), QuickChatData::settingsBuf[cat], maxInput + 1))
                 {
                     QuickChatData::settingsCategories[cat].customText = QuickChatData::settingsBuf[cat];
                 }
@@ -114,7 +118,7 @@ namespace SimpleMode
                     auto& sc = QuickChatData::settingsCategories[cat];
                     if (sc.address != 0 && sc.maxChars > 0)
                     {
-                        std::wstring wtext(sc.customText.begin(), sc.customText.end());
+                        std::wstring wtext = RLUtils::Utf8ToWide(sc.customText);
                         MemoryUtils::WriteWideString(sc.address, wtext, sc.maxChars);
                     }
                     Persistance::SaveProfile(Profile::GetCurrentProfileName());

@@ -33,7 +33,7 @@ namespace Notification
     // ==================== Constants ====================
     
     static constexpr size_t OFFSET_GFXDATA_FLAGS       = 0xA8;
-    static constexpr size_t OFFSET_NOTIFSAVE_FLAGS     = 0xD8;
+    static constexpr size_t OFFSET_NOTIFSAVE_FLAGS     = 0xE0;
     static constexpr size_t OFFSET_POPUP_FLAGS         = 0x88;
     static constexpr size_t OFFSET_POPUP_DURATION      = 0x8C;
     static constexpr float  DEFAULT_POPUP_DURATION     = 5.0f;

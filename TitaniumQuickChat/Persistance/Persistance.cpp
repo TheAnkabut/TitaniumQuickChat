@@ -6,6 +6,7 @@
 #include "../UI/Profile.h"
 #include "../UI/Modes/Playground.h"
 #include "../RL/MemoryScanner.h"
+#include "../Utils/RLUtils.h"
 #include "../Utils/json.hpp"
 #include <filesystem>
 #include <fstream>
@@ -102,6 +103,7 @@ namespace Persistance
             
             auto* qc = QuickChatData::userBindings[i];
             binding["text"] = qc ? qc->text : "";
+            binding["idString"] = qc ? qc->id.ToString() : "";
             binding["channel"] = static_cast<int>(QuickChatData::slotChannels[i]);
             binding["customText"] = qc ? qc->customText : "";
             
@@ -128,7 +130,7 @@ namespace Persistance
         {
             if (!qc.customText.empty())
             {
-                root["customTexts"][qc.text] = qc.customText;
+                root["customTexts"][qc.id.ToString()] = qc.customText;
             }
         }
         
@@ -221,11 +223,11 @@ namespace Persistance
         // Load customTexts map first (covers all QCs including available)
         if (root.contains("customTexts") && root["customTexts"].is_object())
         {
-            for (auto& [text, customText] : root["customTexts"].items())
+            for (auto& [key, customText] : root["customTexts"].items())
             {
                 for (auto& qc : QuickChatData::allChats)
                 {
-                    if (qc.text == text)
+                    if (qc.id.ToString() == key || qc.text == key)
                     {
                         qc.customText = customText.get<std::string>();
                         break;
@@ -243,6 +245,7 @@ namespace Persistance
                 if (index >= 24) break;
                 
                 std::string text = binding.value("text", "");
+                std::string idString = binding.value("idString", "");
                 int channel = binding.value("channel", 0);
                 std::string customText = binding.value("customText", "");
                 
@@ -250,13 +253,14 @@ namespace Persistance
                 QuickChatData::QuickChat* found = nullptr;
                 for (auto& qc : QuickChatData::allChats)
                 {
-                    if (qc.text == text)
+                    if ((!idString.empty() && qc.id.ToString() == idString) ||
+                        (idString.empty() && qc.text == text))
                     {
                         found = &qc;
                         break;
                     }
                 }
-                
+
                 QuickChatData::userBindings[index] = found;
                 QuickChatData::slotChannels[index] = static_cast<QuickChatData::Channel>(channel);
                 
@@ -275,25 +279,28 @@ namespace Persistance
             size_t i = 0;
             for (const auto& cat : root["settingsCategories"])
             {
-                if (i >= QuickChatData::settingsCategories.size() || i >= 6) break;
+                if (i >= 6) break;
                 std::string text = cat.get<std::string>();
-                QuickChatData::settingsCategories[i].customText = text;
                 
                 // Sync UI buffer
                 strncpy_s(QuickChatData::settingsBuf[i], text.c_str(), sizeof(QuickChatData::settingsBuf[i]) - 1);
                 
                 // Write to game memory if address is valid
-                auto& sc = QuickChatData::settingsCategories[i];
-                if (!text.empty() && sc.address != 0 && sc.maxChars > 0)
+                if (i < QuickChatData::settingsCategories.size())
                 {
-                    std::wstring wtext(text.begin(), text.end());
-                    MemoryUtils::WriteWideString(sc.address, wtext, sc.maxChars);
-                }
-                else if (text.empty() && sc.address != 0 && sc.maxChars > 0)
-                {
-                    // Restore original text
-                    std::wstring woriginal(sc.text.begin(), sc.text.end());
-                    MemoryUtils::WriteWideString(sc.address, woriginal, sc.maxChars);
+                    QuickChatData::settingsCategories[i].customText = text;
+                    auto& sc = QuickChatData::settingsCategories[i];
+                    if (!text.empty() && sc.address != 0 && sc.maxChars > 0)
+                    {
+                        std::wstring wtext = RLUtils::Utf8ToWide(text);
+                        MemoryUtils::WriteWideString(sc.address, wtext, sc.maxChars);
+                    }
+                    else if (text.empty() && sc.address != 0 && sc.maxChars > 0)
+                    {
+                        // Restore original text
+                        std::wstring woriginal = RLUtils::Utf8ToWide(sc.text);
+                        MemoryUtils::WriteWideString(sc.address, woriginal, sc.maxChars);
+                    }
                 }
                 
                 i++;
@@ -365,6 +372,7 @@ namespace Persistance
         root["comboTiming"] = Header::GetComboTiming();
         root["progressiveTiming"] = Header::GetProgressiveTiming();
         root["customChannelPerQC"] = Header::GetCustomChannelPerQC();
+        root["showMatchNotif"] = Header::GetShowMatchNotif();
         
         std::string settingsPath = basePath + "\\settings.json";
         std::ofstream file(settingsPath);
@@ -400,6 +408,7 @@ namespace Persistance
         Header::SetComboTiming(root.value("comboTiming", 0.2f));
         Header::SetProgressiveTiming(root.value("progressiveTiming", 0.15f));
         Header::SetCustomChannelPerQC(root.value("customChannelPerQC", false));
+        Header::SetShowMatchNotif(root.value("showMatchNotif", true));
         Profile::SetSwitchBind(root.value("switchBind", ""));
     }
     

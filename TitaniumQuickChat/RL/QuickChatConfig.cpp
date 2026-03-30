@@ -72,7 +72,7 @@ namespace QuickChatConfig
                 LOG("QuickChatConfig: Captured 24");
             });
         
-        // Read bindings directly from save (ProfileQuickChatSave_TA.QuickChatBindings at 0xC8)
+        // Read bindings directly from save (ProfileQuickChatSave_TA.QuickChatBindings at 0xD0)
         auto directRead = []() {
             UObject* save = Internals::FindObject(
                 "ProfileQuickChatSave_TA Transient.SaveData_TA.ProfileQuickChatSave_TA"
@@ -80,7 +80,7 @@ namespace QuickChatConfig
             if (!save) return false;
             
             auto* bindings = reinterpret_cast<TArray<FName>*>(
-                reinterpret_cast<uint8_t*>(save) + 0xC8
+                reinterpret_cast<uint8_t*>(save) + 0xD0
             );
             
             if (!bindings->Data || bindings->Count < 24) return false;

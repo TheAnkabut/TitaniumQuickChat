@@ -157,8 +157,30 @@ namespace ChatSender
             Playground::UpdateAllProcessedText();
             Channel ch = static_cast<Channel>(channel);
             
-            // Helper lambda to send a single chunk 
+            // Helper lambda to send a single chunk
+            // If matches qc send as preset
             auto sendChunk = [&](const std::string& msg) {
+
+                for (const auto& qc : QuickChatData::allChats)
+                {
+                    if (qc.text == msg)
+                    {
+
+                        RestorePresetFunction();
+                        
+                        UGFxData_Chat_TA_execSendChatPresetMessage_Params params = {};
+                        params.MessageId = qc.id;
+                        params.bTeam = (channel == 1) ? 1 : 0;
+                        
+                        UFunction* presetFunc = UFunction::FindFunction("Function TAGame.GFxData_Chat_TA.SendChatPresetMessage");
+                        gfxChat->ProcessEvent(presetFunc, &params, nullptr);
+                        
+                        DisablePresetFunction();
+                        return;
+                    }
+                }
+                
+
                 std::wstring wideMessage = RLUtils::Utf8ToWide(msg);
                 FString messageString;
                 messageString.Data = const_cast<wchar_t*>(wideMessage.c_str());
@@ -187,6 +209,10 @@ namespace ChatSender
                     size_t endBracket = fullMessage.find(']', i);
                     if (endBracket != std::string::npos)
                     {
+                        while (!currentText.empty() && currentText.back() == ' ') {
+                            currentText.pop_back();
+                        }
+                        
                         if (!currentText.empty())
                         {
                             chunks.push_back({currentText, currentDelay});
@@ -201,6 +227,9 @@ namespace ChatSender
                         }
                         
                         i = endBracket + 1;
+                        while (i < fullMessage.length() && fullMessage[i] == ' ') {
+                            i++;
+                        }
                         continue;
                     }
                 }
@@ -227,6 +256,10 @@ namespace ChatSender
                         (unsigned char)fullMessage[j+2] == 0xB7 &&
                         fullMessage[j+3] == ' ')
                     {
+                        while (!currentText.empty() && currentText.back() == ' ') {
+                            currentText.pop_back();
+                        }
+                        
                         if (!currentText.empty())
                         {
                             chunks.push_back({currentText, currentDelay});

@@ -73,6 +73,12 @@ namespace QuickChatBindingsOnShellSet
             }
             
             quickChat.text = localizedQC.Message.ToUTF8();
+            
+            // Replace Unicode ellipsis (U+2026) with ASCII "..."
+            size_t pos;
+            while ((pos = quickChat.text.find("\xe2\x80\xa6")) != std::string::npos)
+                quickChat.text.replace(pos, 3, "...");
+            
             quickChat.processedText = quickChat.text;  // Initialize processedText
             QuickChatData::allChats.push_back(quickChat);
         }

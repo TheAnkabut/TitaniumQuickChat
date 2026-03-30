@@ -14,6 +14,8 @@
 #include "../QuickChatCustomUI/QuickChatCustomUI.h"
 #include "../Loadout/Loadout.h"
 #include "../Utils/Localization.h"
+#include "../Utils/RLUtils.h"
+#include "../RL/MemoryScanner.h"
 #include <vector>
 #include <string>
 #include <cmath>
@@ -183,6 +185,18 @@ namespace Profile
         // New profile starts with empty customizations
         ClearAllCustomizations();
         
+        // Reset settings to defaults
+        for (size_t i = 0; i < QuickChatData::settingsCategories.size() && i < 6; i++)
+        {
+            auto& sc = QuickChatData::settingsCategories[i];
+            if (sc.address != 0 && sc.maxChars > 0)
+            {
+                std::wstring woriginal = RLUtils::Utf8ToWide(sc.text);
+                MemoryUtils::WriteWideString(sc.address, woriginal, sc.maxChars);
+            }
+            QuickChatData::settingsBuf[i][0] = '\0';
+        }
+        
         ProfileData newProfile;
         newProfile.name = name;
         CaptureStateToProfile(newProfile);
@@ -218,9 +232,9 @@ namespace Profile
             return;
         }
         
-        // No need to save 
         selectedProfile = index;
         LoadProfile(selectedProfile);
+        Persistance::SaveGlobalSettings();
         
         // Re-apply all QC bindings to the game
         for (int i = 0; i < 24; i++)

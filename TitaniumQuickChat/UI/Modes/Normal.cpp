@@ -11,6 +11,7 @@
 #include "../../RL/RefreshSettings.h"
 #include "../../RL/Replacer/InGameReplacer.h"
 #include "../../Utils/Localization.h"
+#include "../../Utils/RLUtils.h"
 
 namespace NormalMode
 {
@@ -166,6 +167,12 @@ namespace NormalMode
         // Configured (24 user)
         const auto& cats = QuickChatData::settingsCategories;
         const char* channelLabels[] = {"M", "T", "P"};
+
+        if (SettingsScanner::IsUnsupportedLanguage())
+        {
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(Settings/Title editing only available in English/Spanish)");
+            ImGui::Spacing();
+        }
         
         for (int cat = 0; cat < 6; cat++)
         {
@@ -199,12 +206,7 @@ namespace NormalMode
                 ImGui::TextColored(COLOR_CAT_SETTINGS, TL("category_n"), cat + 1);
             }
             
-            if (SettingsScanner::IsUnsupportedLanguage())
-            {
-                ImGui::SameLine();
-                ImGui::TextColored(ImVec4(1.0f, 0.7f, 0.3f, 1.0f), "(Settings category editing only available in English/Spanish)");
-            }
-            else if (cat < static_cast<int>(cats.size()) && !cats[cat].text.empty())
+            if (!SettingsScanner::IsUnsupportedLanguage() && cat < static_cast<int>(cats.size()) && !cats[cat].text.empty())
             {
                 ImGui::SameLine();
                 size_t maxInput = cats[cat].maxChars > 0 ? cats[cat].maxChars : 50;
@@ -219,7 +221,7 @@ namespace NormalMode
                     auto& sc = QuickChatData::settingsCategories[cat];
                     if (sc.address != 0 && sc.maxChars > 0)
                     {
-                        std::wstring wtext(sc.customText.begin(), sc.customText.end());
+                        std::wstring wtext = RLUtils::Utf8ToWide(sc.customText);
                         MemoryUtils::WriteWideString(sc.address, wtext, sc.maxChars);
                         LOG("Wrote settings category {} to memory: '{}' (maxChars={})", cat, sc.customText, sc.maxChars);
                     }
